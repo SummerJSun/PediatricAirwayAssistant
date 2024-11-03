@@ -18,6 +18,9 @@ export default function ChatbotUi({isUserAdmin}){
             return prevMessages.slice(0, -1); // Remove the last message
         });
     };
+    const handleUserInput = (e) => {
+        setUserInput(e.target.value);
+      };
 
     const formatMessage = (text) => {
         // Replace /n with <br> for new lines
@@ -77,13 +80,58 @@ export default function ChatbotUi({isUserAdmin}){
         }
     };
 
-    const fetchImage = (id) => {
+    const fetchImage = (id, toRespond) => {
       // Example fetch request to your backend endpoint that serves the image
       fetch(`${process.env.REACT_APP_BACKEND_URL}/get-image/${id}`)
           .then(response => response.json())
           .then(data => {
               const botMessage = { id: Date.now(), text: data.image, sender: 'bot', type: 'image', style: { width: '50%' } };
               setMessages(prevMessages => [...prevMessages, botMessage]);
+
+              if(toRespond === true){
+                // Now initiate the EventSource for streaming the response
+                const eventSource = new EventSource(`${process.env.REACT_APP_BACKEND_URL}/stream-chat`);
+
+                eventSource.onmessage = (event) => {
+                    console.log("Streaming Started for Knowledge Fetch");
+                    // Check if a bot message exists to update
+                    setMessages(prevMessages => {
+                        const lastMessageIndex = prevMessages.length - 1;
+                        if (prevMessages[lastMessageIndex]?.sender === 'bot' && prevMessages[lastMessageIndex]?.isStreamed) {
+                            const updatedMessages = [...prevMessages];
+                            let text = event.data;
+                            let formatText = formatMessage(text);
+                            updatedMessages[lastMessageIndex].text += formatText;
+                            return updatedMessages;
+                        } else {
+                            const botMessage = { id: Date.now(), text: event.data, sender: 'bot', isStreamed: true, type: 'text' };
+                            return [...prevMessages, botMessage];
+                        }
+                    });
+                };
+
+                eventSource.addEventListener('stream_close', (event) => {
+                    setMessages(prevMessages => {
+                        const lastMessageIndex = prevMessages.length - 1;
+
+                        if (prevMessages[lastMessageIndex]?.sender === 'bot') {
+                            const updatedMessages = [...prevMessages];
+                            updatedMessages[lastMessageIndex].isStreamed = false; // Mark the stream as completed
+                            console.log(updatedMessages[lastMessageIndex].text);
+                            return updatedMessages;
+                        }
+                        return prevMessages;
+                    });
+                    eventSource.close(); // Close the EventSource connection
+                    console.log("Stream closed:");
+                });
+
+                eventSource.onerror = (error) => {
+                    console.error('Error with streaming:', error);
+                    eventSource.close();
+                };
+
+              }
           })
           .catch(error => console.error('Error fetching the image:', error))
           .finally(() => setIsLoading(false));
@@ -143,27 +191,6 @@ export default function ChatbotUi({isUserAdmin}){
             console.error("Error fetching knowledge or starting stream:", error);
         });
 };
-
-
-    const ExampleComponent = ({fetchMessage}) => {
-      return (
-        <TypeAnimation
-          sequence={[
-            // Same substring at the start will only be typed out once, initially
-            fetchMessage,
-            1000
-          ]}
-          wrapper="span"
-          speed={50}
-          style={{ fontSize: '1em', display: 'inline-block' }}
-          repeat={1}
-        />
-      );
-    };
-  
-    const handleUserInput = (e) => {
-      setUserInput(e.target.value);
-    };
 
 
 const handleSubmit = (e) => {
@@ -253,19 +280,21 @@ const handleSubmit = (e) => {
         const match = messageText.toLowerCase().match(/related image found, image id is (\d+)/);
         const instruction_match = messageText.toLowerCase().match(/instruction image found, image id is (\d+)/);
         const knowledge_match = messageText.toLowerCase().match(/external knowledge detected, the term is (.*)/);
-        if (match) {
-            console.log("User image search requested")
-            const imageId = match[1]; // Extract the ID from the message
-            fetchImage(imageId); // Call fetchImage with the extracted ID
-        } else if (instruction_match) {
-            console.log("Bot instruction image search requested")
+        if (instruction_match && knowledge_match) {
+            console.log("Bot instruction image search and External knowledge requested")
+            deleteLastMessage();
             // setMessages(prevMessages => [...prevMessages, botMessage]);
             const imageId = instruction_match[1];
-            fetchImage(imageId);
-        }  
-
+            fetchImage(imageId, false);
+        }  else if (instruction_match) {
+            console.log("Only Bot instruction image search requested, id: ", instruction_match[1])
+            deleteLastMessage();
+            fetchImage(imageId, true);
+            console.log("No image needed")
+        } 
+       
         if (knowledge_match) {
-            console.log("knowledge base query requested, matched knowledge", knowledge_match[1])
+            console.log("Only knowledge base query requested, matched knowledge", knowledge_match[1])
             const overview = knowledge_match[1];
             deleteLastMessage();
             fetchKnowledge(overview);
@@ -349,7 +378,7 @@ const handleSubmit = (e) => {
             clearTimeout(autoSaveTimeout);
             setAutoSaveTimeout(setTimeout(() => {
                 submitChatHistory(history);
-            }, 5000)); // Wait 5 seconds after last message before saving
+            }, 100)); // Wait 5 seconds after last message before saving
         };
 
         autoSaveChatHistory();

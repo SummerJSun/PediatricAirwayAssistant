@@ -19,11 +19,6 @@ class BMVAssistant:
             with open(os.path.join(BASE_DIR, "CompletionsAPI", "instruction_text.txt"), "r") as file:
                 self.instruction = file.read()
 
-        # # load data file
-        # if isinstance(json_file, str):
-        #     with open(json_file, 'r') as file:
-        #         self.data = json.load(file)
-        # else:
         self.data = json_file
         print(json_file)
 
