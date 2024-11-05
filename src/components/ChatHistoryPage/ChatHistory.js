@@ -39,7 +39,8 @@ export default function ChatHistory() {
         setIsSearching(true);
 
         try {
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/get-conversation-history/${id}`);
+            const encodedID = encodeURIComponent(encodeURIComponent(id));
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/get-conversation-history/${encodedID}`);
             if (!response.ok) throw new Error('Error fetching conversation history');
 
             const data = await response.json();
@@ -47,7 +48,6 @@ export default function ChatHistory() {
                 setError('No conversation history found for this ID');
                 setConversations([]);
             } else {
-                // Sort conversations by timestamp, newest first
                 const sortedConversations = data.conversationHistory.sort((a, b) => 
                     new Date(b.timestamp) - new Date(a.timestamp)
                 );

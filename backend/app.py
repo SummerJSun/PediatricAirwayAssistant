@@ -12,6 +12,7 @@ import base64
 from werkzeug.utils import secure_filename
 from bson import ObjectId
 import json
+from urllib.parse import unquote
 
 load_dotenv()
 
@@ -136,8 +137,9 @@ def get_last_cases():
 @app.route('/check-participant-id/<participant_id>', methods=['GET'])
 def check_participant_id(participant_id):
     try:
-        # Check if the participant ID exists in the database
-        conversation_exists = db.conversations.find_one({"participantID": participant_id}) is not None
+        # Double decode here too
+        decoded_id = unquote(unquote(participant_id))
+        conversation_exists = db.conversations.find_one({"participantID": decoded_id}) is not None
         return jsonify({"exists": conversation_exists}), 200
     except Exception as e:
         app.logger.error(f"Error checking participant ID: {e}")
@@ -146,8 +148,11 @@ def check_participant_id(participant_id):
 @app.route('/get-conversation-history/<participant_id>', methods=['GET'])
 def get_conversation_history(participant_id):
     try:
+        # Double decode to handle forward slashes
+        decoded_id = unquote(unquote(participant_id))
+        
         conversation = db.conversations.find_one(
-            {"participantID": participant_id},
+            {"participantID": decoded_id},
             {'_id': 0}
         )
         

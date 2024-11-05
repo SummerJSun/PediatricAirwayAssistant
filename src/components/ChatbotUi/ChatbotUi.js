@@ -349,7 +349,7 @@ const handleSubmit = (e) => {
             clearTimeout(autoSaveTimeout);
             setAutoSaveTimeout(setTimeout(() => {
                 submitChatHistory(history);
-            }, 5000)); // Wait 5 seconds after last message before saving
+            }, 100)); 
         };
 
         autoSaveChatHistory();
