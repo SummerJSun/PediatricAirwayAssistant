@@ -381,9 +381,6 @@ const handleSubmit = (e) => {
                     <div className="loading-bar">Chatbot Initializing ... </div>
                 ) : (
                     <>
-                        {isUserAdmin && (
-                            <button type="button" className='reset-button' onClick={handleResetConversation}>Reset</button>
-                        )}
                         <button type="button" className='reset-button' onClick={handleParticipantIDReset}>ParticipantID Reset</button>
                         <input type="text" className='user-input' value={userInput} onChange={handleUserInput} placeholder="Say something..." />
                         <button type="submit">Send</button>
