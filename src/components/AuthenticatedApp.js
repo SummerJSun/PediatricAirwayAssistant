@@ -4,6 +4,7 @@ import ChatbotUi from './ChatbotUi/ChatbotUi';
 import DataCollectionPage from './DataCollectionPage/DataCollectionPage';
 import ChatHistory from './ChatHistoryPage/ChatHistory';
 import InstructionUi from './InstructionUi/InstructionUi';
+import Reasoner from './ReasonerUI/reasoner';
 import LogoutButton from './Auth/LogOut/LogOut';
 import ProfileWindow from './Auth/Profile/ProfileWindow';
 import ParticipantIDPopup from './ParticipantIDPopup/ParticipantIDPopup';
@@ -56,10 +57,10 @@ const AuthenticatedApp = ({
                       onClick={() => chatbotLoaded ? setActiveInterface('ChatbotUi') : setShowParticipantIDPopup(true)} />
           {isUserAdmin && <SideButton value={'Chat History'}
                                       onClick={() => setActiveInterface('ChatHistory')} />}
-          {isUserAdmin && <SideButton value={'Data Collection'}
-                                      onClick={() => setActiveInterface('DataCollectUi')} />}
           {isUserAdmin && <SideButton value={'Instruction Editor'}
                                       onClick={() => setActiveInterface('Instruction Editor')} />} 
+          {isUserAdmin && <SideButton value={'Reasoner Editor'}
+                                      onClick={() => setActiveInterface('Reasoner Editor')} />} 
           {isUserAdmin && <SideButton value={'Image Upload'} 
                                       onClick={() => setActiveInterface('ImageUpload')} />}   
           {isUserAdmin && <SideButton value={'Case Editor'} 
@@ -70,9 +71,9 @@ const AuthenticatedApp = ({
         </div>
         <div className="chat-container">
           {activeInterface === 'ChatbotUi' && <ChatbotUi participantID={participantID} isUserAdmin={isUserAdmin} />}
-          {isUserAdmin && activeInterface === 'DataCollectUi' && <DataCollectionPage />}
           {isUserAdmin && activeInterface === 'ChatHistory' && <ChatHistory />}
           {isUserAdmin && activeInterface === 'Instruction Editor' && <InstructionUi />}
+          {isUserAdmin && activeInterface === 'Reasoner Editor' && <Reasoner />}
           {isUserAdmin && activeInterface === 'ImageUpload' && <ImageUpload />}
           {isUserAdmin && activeInterface === 'CaseEditor' && <CaseEditor />}
           {isUserAdmin && activeInterface === 'External Reference' && <ExternalReference />}

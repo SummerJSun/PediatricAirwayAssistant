@@ -3,7 +3,7 @@ import './ExternalReference.css';
 
 const KnowledgeManagement = () => {
     const [entries, setEntries] = useState([]);
-    const [newEntry, setNewEntry] = useState({ overview: '', detail: '' });
+    const [newEntry, setNewEntry] = useState({ id: '', overview: '', detail: '' });
     const [isEditing, setIsEditing] = useState(null);
 
     // Fetch all entries from the backend
@@ -47,7 +47,7 @@ const KnowledgeManagement = () => {
                 } else {
                     setEntries([...entries, data.entry]);
                 }
-                setNewEntry({ overview: '', detail: '' });
+                setNewEntry({ id: '', overview: '', detail: '' });
                 setIsEditing(null);
             } else {
                 console.error('Save failed:', data.error);
@@ -77,7 +77,7 @@ const KnowledgeManagement = () => {
 
     // Edit an Entry
     const handleEditEntry = (entry) => {
-        setNewEntry({ overview: entry.overview, detail: entry.detail });
+        setNewEntry({ id: entry.id, overview: entry.overview, detail: entry.detail });
         setIsEditing(entry._id);
     };
 
@@ -89,6 +89,14 @@ const KnowledgeManagement = () => {
         <div className="knowledge-management-container">
             <h3>Knowledge Management Interface</h3>
             <div className="entry-form">
+                <input
+                    type="text"
+                    name="id"
+                    value={newEntry.id}
+                    onChange={handleInputChange}
+                    placeholder="ID"
+                    className="input-field"
+                />
                 <input
                     type="text"
                     name="overview"
@@ -113,6 +121,7 @@ const KnowledgeManagement = () => {
             <div className="entry-list">
                 {entries.map((entry) => (
                     <div key={entry._id} className="entry-item">
+                        <h4>ID: {entry.id}</h4>
                         <h4>Overview: {entry.overview}</h4>
                         <p>Detail: {entry.detail}</p>
                         <div className="entry-controls">

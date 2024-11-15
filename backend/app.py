@@ -35,6 +35,7 @@ case_description = None
 global_participant_id = None
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INSTRUCTION_FILE = os.path.join(BASE_DIR, "CompletionsAPI", "instruction_text.txt")
+REASONER_FILE = os.path.join(BASE_DIR, "CompletionsAPI", "reasoner_text.txt")
 with open(INSTRUCTION_FILE, "r", encoding="utf-8", errors='replace') as file:
     instruction_text = file.read()
 
@@ -48,12 +49,24 @@ def get_mongo():
 def get_instruction_text():
     return send_from_directory(os.path.dirname(INSTRUCTION_FILE), os.path.basename(INSTRUCTION_FILE))
 
+@app.route('/api/reasoner-text', methods=['GET'])
+def get_reasoner_text():
+    return send_from_directory(os.path.dirname(REASONER_FILE), os.path.basename(REASONER_FILE))
+
 
 @app.route('/api/save-instruction-text', methods=['POST'])
 def save_instruction_text():
     data = request.get_json()
     text = data['text']
     with open(INSTRUCTION_FILE, 'w') as file:
+        file.write(text)
+    return {'status': 'File saved successfully'}
+
+@app.route('/api/save-reasoner-text', methods=['POST'])
+def save_reasoner_text():
+    data = request.get_json()
+    text = data['text']
+    with open(REASONER_FILE, 'w') as file:
         file.write(text)
     return {'status': 'File saved successfully'}
 
@@ -246,8 +259,15 @@ def submit_user_input():
     if not user_input:
         return jsonify({"error": "No input provided"}), 400
 
-    bmv_assistant.submit_message(user_input)
-    return {'message': 'User message submitted successfully'}, 200
+    image = bmv_assistant.submit_message(user_input)
+    
+    # If there is an image, include it in the response and indicate stream readiness
+    if image:
+        return jsonify({"image": f"data:image/jpeg;base64,{image}", "streamReady": True}), 200
+    
+    # Otherwise, indicate that streaming is ready without an image
+    return jsonify({'message': 'User message submitted successfully', "streamReady": True}), 200
+
 
 @app.route('/stream-chat', methods=['GET'])
 @cross_origin()
@@ -452,6 +472,10 @@ def add_case():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+from flask import jsonify, request
+from bson import ObjectId
+
+# Fetch all entries
 @app.route('/get_entries', methods=['GET'])
 def get_entries():
     knowledge_collection = db['knowledge']
@@ -460,24 +484,29 @@ def get_entries():
         entry['_id'] = str(entry['_id'])  # Convert ObjectId to string for JSON serialization
     return jsonify({'entries': entries})
 
+# Fetch a specific knowledge entry by overview
 @app.route('/get-knowledge/<overview>', methods=['GET'])
 def get_knowledge(overview):
     knowledge_collection = db['knowledge']
     try:
         overview = overview.upper()
-        print(overview)
         entry = knowledge_collection.find_one({"overview": overview})
-        detail = entry['detail']
-        bmv_assistant.submit_knowledge(detail)
-        return jsonify({'detail': detail})
+        if entry:
+            detail = entry['detail']
+            bmv_assistant.submit_knowledge(detail)
+            return jsonify({'detail': detail})
+        else:
+            return jsonify({'error': 'Entry not found'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Add a new entry
 @app.route('/add_entry', methods=['POST'])
 def add_entry():
     knowledge_collection = db['knowledge']
     data = request.json
     new_entry = {
+        'id': data['id'],  # Include the id field
         'overview': data['overview'],
         'detail': data['detail']
     }
@@ -485,6 +514,7 @@ def add_entry():
     new_entry['_id'] = str(result.inserted_id)
     return jsonify({'entry': new_entry}), 201
 
+# Update an existing entry
 @app.route('/update_entry/<entry_id>', methods=['PUT'])
 def update_entry(entry_id):
     knowledge_collection = db['knowledge']
@@ -492,6 +522,7 @@ def update_entry(entry_id):
     result = knowledge_collection.update_one(
         {'_id': ObjectId(entry_id)},
         {'$set': {
+            'id': data['id'],         # Include the id field
             'overview': data['overview'],
             'detail': data['detail']
         }}
@@ -502,15 +533,16 @@ def update_entry(entry_id):
     updated_entry['_id'] = str(updated_entry['_id'])
     return jsonify({'entry': updated_entry}), 200
 
+# Delete an entry
 @app.route('/delete_entry/<entry_id>', methods=['DELETE'])
 def delete_entry(entry_id):
-    print(entry_id)
     knowledge_collection = db['knowledge']
     result = knowledge_collection.delete_one({'_id': ObjectId(entry_id)})
     if result.deleted_count == 1:
-            return jsonify({"success": True, "message": "Entry deleted successfully"}), 200
+        return jsonify({"success": True, "message": "Entry deleted successfully"}), 200
     else:
         return jsonify({"error": "Entry not found"}), 404
+
 
 if __name__ == '__main__':
     app.run(port=4999)

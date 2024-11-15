@@ -1,5 +1,7 @@
 from openai import OpenAI
 from dotenv import load_dotenv
+from CompletionsAPI.reasoner import *
+from CompletionsAPI.db_calls import *
 import json
 import os
 import time
@@ -33,21 +35,40 @@ class BMVAssistant:
         self.chat_history = [{"role": "system", "content": self.instruction_and_data}]
         self.chat_history_without_system_message = []
         self.reinforce = reinforce
+        self.reasoner = Reasoner()
 
     def submit_message(self, user_message):
         message = {"role": "user", "content": user_message}
         self.chat_history.append(message)
-        #self.chat_history.append({"role": "system", "content": self.instruction_and_data})
         self.chat_history_without_system_message.append(message)
 
+        last_two_messages = self.chat_history[-2:]
+
+        for message in last_two_messages:
+            self.reasoner.chat_history.append(message)
+
+        response = self.reasoner.get_response()
+
+        if response["NeedKnowledge"]:
+            print('Knowledge Needed')
+            knowledge = get_knowledge(response["KnowledgeID"])
+            print(knowledge)
+            self.submit_knowledge(knowledge)
+        if response["NeedImage"]:
+            print('Image Needed')
+            image_for_frontend, description = get_image(response["ImageID"])
+            self.chat_history.append({"role": "system", "content": f"Helpful Image provided. It is about {description}"})
+            return image_for_frontend
+        
+        return None
+
+
     def submit_knowledge(self, knowledge):
-        knowledge += "Phrase your response to the user using the above provided external knowledge."
+        knowledge += "Enhance your response to the user using the above provided external knowledge."
         message = {"role": "system", "content": knowledge}
         self.chat_history.append(message)
-        #self.chat_history.append({"role": "system", "content": self.instruction_and_data})
         self.chat_history_without_system_message.append(message)
         print('Knowledge Appended to History')
-        print(self.chat_history)
 
     def generate_response(self, streaming):
         return self.client.chat.completions.create(
@@ -68,15 +89,6 @@ class BMVAssistant:
         yield "event: stream_close\ndata: Stream completed.\n\n"
         self.chat_history.append({"role": "assistant", "content": full_message})
         print('Bot Response Appended to History')
-
-    def get_response(self, print_output=False):
-        response = self.generate_response(streaming=False)
-        output = response.choices[0].message.content
-        if print_output:
-            print(output)
-        self.chat_history.append({"role": "assistant", "content": output})
-        self.chat_history_without_system_message.append({"role": "assistant", "content": output})
-        return response.choices[0].message.content
 
 
 def initialize(case_description, instruction_text):
