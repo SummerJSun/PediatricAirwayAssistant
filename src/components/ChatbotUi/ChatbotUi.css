@@ -128,3 +128,18 @@ button {
   object-fit: cover; /* Ensures the image fills its box, covering it entirely */
   border-radius: 10px; /* Optional: Add some rounding for visual consistency */
 }
+
+.thinking-text {
+  font-size: 1.2em;
+  color: #999;
+  padding: 10px;
+  text-align: left;
+  animation: blink 1s step-start 0s infinite; /* Slower blink frequency */
+}
+
+@keyframes blink {
+  50% {
+      opacity: 0;
+  }
+}
+

@@ -12,6 +12,7 @@ export default function ChatbotUi({isUserAdmin}){
     const [participantID, setParticipantID] = useState('');
     const [ready, setReady] = useState(false);
     const [image, setImage] = useState(null);
+    const [isThinking, setIsThinking] = useState(false);
 
     const deleteLastMessage = () => {
         setMessages(prevMessages => {
@@ -88,6 +89,8 @@ export default function ChatbotUi({isUserAdmin}){
         e.preventDefault();
         if (userInput.trim() === "") return;
 
+        setIsThinking(true);
+
         const userMessage = { id: Date.now(), text: userInput, sender: 'user', type: 'text' };
         setMessages((prevMessages) => [...prevMessages, userMessage]);
         setUserInput(''); 
@@ -112,6 +115,8 @@ export default function ChatbotUi({isUserAdmin}){
             if (data.streamReady) setReady(true);
         } catch (error) {
             console.error("Error submitting input or starting stream:", error);
+        }finally {
+            setIsThinking(false); // Hide "Thinking..." after response is received
         }
     };
 
@@ -289,25 +294,33 @@ export default function ChatbotUi({isUserAdmin}){
         }
     };
 
+
     return (
         <div className="chatbot-ui">
             <div className="chat-window" ref={chatWindowRef}>
                 {messages.map((msg) => (
                     <div key={msg.id} className={`message ${msg.sender}`}>
-                        {msg.type === 'text' ? <div className="formatted-text" dangerouslySetInnerHTML={{ __html: msg.text }} /> : <img src={msg.text} alt="Chatbot response" className="chat-image" />}
+                        {msg.type === 'text' ? (
+                            <div className="formatted-text" dangerouslySetInnerHTML={{ __html: msg.text }} />
+                        ) : (
+                            <img src={msg.text} alt="Chatbot response" className="chat-image" />
+                        )}
                     </div>
                 ))}
-                {isLoading && <div className="loading-message">Generating response </div>}
+                {isThinking && (
+                    <div className="thinking-text">Thinking...</div>
+                )}
             </div>
             <form className="chat-bot-form" onSubmit={handleSubmit}>
                 {loading ? (
-                    <div className="loading-bar">Chatbot Initializing ... </div>
+                    <div className="loading-bar">Chatbot Initializing...</div>
                 ) : (
                     <>
-                        <button type="button" className='reset-button' onClick={handleParticipantIDReset}>ParticipantID Reset</button>
-                        <input type="text" className='user-input' value={userInput} onChange={handleUserInput} placeholder="Say something..." />
+                        {isUserAdmin && <button type="button" className="reset-button" onClick={handleResetConversation}>Reset</button>}
+                        <button type="button" className="reset-button" onClick={handleParticipantIDReset}>ParticipantID Reset</button>
+                        <input type="text" className="user-input" value={userInput} onChange={(e) => setUserInput(e.target.value)} placeholder="Say something..." />
                         <button type="submit">Send</button>
-                        <button type="button" className='save-conversation-button' onClick={handleManualSave}>Save</button> 
+                        <button type="button" className="save-conversation-button" onClick={handleManualSave}>Save</button>
                     </>
                 )}
             </form>
