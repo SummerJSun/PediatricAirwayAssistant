@@ -13,6 +13,14 @@ export default function ChatHistory() {
         fetchRecentCases();
     }, []);
 
+    const formatMassage = (text) => {
+        let formattedText = text.replace(/\n/g, '<br />');
+        formattedText = formattedText.replace(/<br><br>/g, '<br>');
+        formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+        formattedText = formattedText.replace(/<brbr>/g, '<br>');
+        return formattedText;
+    }
+
     const fetchRecentCases = async () => {
         setIsLoading(true);
         try {
@@ -137,7 +145,12 @@ export default function ChatHistory() {
                                     {conv.history.map((msg, msgIndex) => (
                                         <div key={msgIndex} className={`message ${msg.sender}`}>
                                             {msg.type === 'text' ? (
-                                                <div className="formatted-text">{msg.text}</div>
+                                                <div 
+                                                className="formatted-text"
+                                                dangerouslySetInnerHTML={{
+                                                        __html: formatMassage(msg.text)
+                                                    }}
+                                                />
                                             ) : (
                                                 <img src={msg.text} alt="Chatbot response" className="chat-image" />
                                             )}
