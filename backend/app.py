@@ -512,5 +512,26 @@ def delete_entry(entry_id):
     else:
         return jsonify({"error": "Entry not found"}), 404
 
+
+@app.route('/delete-conversation-history/<path:participant_id>', methods=['DELETE'])
+def delete_conversation_history(participant_id):
+    try:
+        # Double decode to handle forward slashes and special characters
+        decoded_id = unquote(unquote(participant_id))
+        app.logger.info(f"Attempting to delete conversation with ID: {decoded_id}")
+        
+        # Delete the conversation from MongoDB
+        result = db.conversations.delete_one({"participantID": decoded_id})
+        
+        if result.deleted_count == 0:
+            app.logger.warning(f"No conversation found with ID: {decoded_id}")
+            return jsonify({"error": "Conversation not found"}), 404
+            
+        app.logger.info(f"Successfully deleted conversation with ID: {decoded_id}")
+        return jsonify({"message": "Conversation deleted successfully"}), 200
+    except Exception as e:
+        app.logger.error(f"Error deleting conversation: {e}")
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(port=4999)

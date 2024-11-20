@@ -1,6 +1,30 @@
+.cases-table td:last-child {
+    display: flex;
+    gap: 10px; /* This adds space between the buttons */
+    align-items: center;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 16px;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
 .delete-button {
-    background-color: #ff6b6b;
+    background-color: #ff4757;
     color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.delete-button:hover {
+    background-color: #ff3445;
 }
 
 .chat-history-container {
@@ -76,6 +100,14 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+}
+
+.conversation-header h2 {
+    margin-right: auto;
+}
+
+.conversation-header button {
+    margin-left: 10px;
 }
 
 .chat-window {

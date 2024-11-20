@@ -13,6 +13,33 @@ export default function ChatHistory() {
         fetchRecentCases();
     }, []);
 
+    const handleDeleteConversation = async (id) => {
+        const confirmDelete = window.confirm('Are you sure you want to delete this chat history? This action cannot be undone.');
+        
+        if (confirmDelete) {
+            try {
+                const encodedID = encodeURIComponent(encodeURIComponent(id));
+                const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/delete-conversation-history/${encodedID}`, {
+                    method: 'DELETE',
+                });
+
+                if (response.ok) {
+                    // Remove the deleted case from the list
+                    setRecentCases(prevCases => 
+                        prevCases.filter(caseItem => caseItem.participantID !== id)
+                    );
+                } else {
+                    console.error('Failed to delete conversation history');
+                    window.alert('Failed to delete conversation history');
+                }
+            } catch (error) {
+                console.error('Error deleting conversation history:', error);
+                window.alert('Error deleting conversation history');
+            }
+        }
+    };
+
+
     const formatMassage = (text) => {
         let formattedText = text.replace(/\n/g, '<br />');
         formattedText = formattedText.replace(/<br><br>/g, '<br>');
@@ -116,6 +143,9 @@ export default function ChatHistory() {
                                             <button onClick={() => handleCaseClick(caseItem.participantID)}>
                                                 View History
                                             </button>
+                                            <button onClick={() => handleDeleteConversation(caseItem.participantID)}>
+                                                Delete
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
@@ -131,7 +161,10 @@ export default function ChatHistory() {
                 <div className="conversation-view">
                     <div className="conversation-header">
                         <h2>Conversation ID: {participantID}</h2>
-                        <button onClick={handleGoBack}>Go Back</button>
+                        <div className="conversation-header-buttons">
+                            <button onClick={() => handleDeleteConversation(participantID)}>Delete</button>
+                            <button onClick={handleGoBack}>Go Back</button>
+                        </div>
                     </div>
                     {error ? (
                         <div className="error-message">{error}</div>
