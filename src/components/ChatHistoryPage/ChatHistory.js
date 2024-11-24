@@ -129,7 +129,8 @@ export default function ChatHistory() {
                                 <th>Participant ID</th>
                                 <th>Date</th>
                                 <th>Time</th>
-                                <th>Action</th>
+                                <th>View</th>
+                                <th>Delete</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -143,7 +144,9 @@ export default function ChatHistory() {
                                             <button onClick={() => handleCaseClick(caseItem.participantID)}>
                                                 View History
                                             </button>
-                                            <button onClick={() => handleDeleteConversation(caseItem.participantID)}>
+                                        </td>
+                                        <td>
+                                            <button className="delete-button" onClick={() => handleDeleteConversation(caseItem.participantID)}>
                                                 Delete
                                             </button>
                                         </td>
@@ -151,7 +154,7 @@ export default function ChatHistory() {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="4" style={{textAlign: 'center'}}>No past cases available</td>
+                                    <td colSpan="5" style={{textAlign: 'center'}}>No past cases available</td>
                                 </tr>
                             )}
                         </tbody>
@@ -161,10 +164,7 @@ export default function ChatHistory() {
                 <div className="conversation-view">
                     <div className="conversation-header">
                         <h2>Conversation ID: {participantID}</h2>
-                        <div className="conversation-header-buttons">
-                            <button onClick={() => handleDeleteConversation(participantID)}>Delete</button>
-                            <button onClick={handleGoBack}>Go Back</button>
-                        </div>
+                        <button className="go-back-button" onClick={handleGoBack}>Go Back</button>
                     </div>
                     {error ? (
                         <div className="error-message">{error}</div>
@@ -193,6 +193,9 @@ export default function ChatHistory() {
                             ))}
                         </div>
                     ) : null}
+                    <div className="bottom-delete-container">
+                        <button className="delete-button" onClick={() => handleDeleteConversation(participantID)}>Delete</button>
+                    </div>
                 </div>
             )}
         </div>

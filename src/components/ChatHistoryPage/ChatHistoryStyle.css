@@ -1,7 +1,35 @@
-.cases-table td:last-child {
-    display: flex;
-    gap: 10px; /* This adds space between the buttons */
-    align-items: center;
+.cases-table td {
+    text-align: center;  /* Center align all table cells */
+}
+
+.cases-table button {
+    background-color: #00897B;  /* Teal color */
+    color: white;  /* White text for better contrast */
+    border: none;
+    border-radius: 25px;  /* Makes the button more rounded */
+    padding: 8px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.cases-table button:hover {
+    background-color: #00AC98;  /* Lighter teal on hover */
+}
+
+.cases-table .delete-button {
+    background-color: #e9a0a5;
+    color: black;
+    border: none;
+    border-radius: 25px;
+    padding: 8px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.cases-table .delete-button:hover {
+    background-color: #ffc2c7;  /* Lighter red on hover */
 }
 
 .header-buttons {
@@ -13,7 +41,7 @@
 }
 
 .delete-button {
-    background-color: #ff4757;
+    background-color: #e9a0a5;
     color: white;
     padding: 8px 16px;
     border: none;
@@ -24,7 +52,7 @@
 }
 
 .delete-button:hover {
-    background-color: #ff3445;
+    background-color: #e9a0a5;
 }
 
 .chat-history-container {
@@ -80,6 +108,7 @@
 .cases-table th {
     background-color: #e6e6e6;  /* Slightly darker grey for header */
     font-weight: bold;
+    color: black;
 }
 
 .cases-table tr:nth-child(even) {
@@ -93,6 +122,8 @@
 .conversation-view {
     border: 1px solid #ddd;
     padding: 20px;
+    position: relative;  /* Add this for absolute positioning context */
+    min-height: 400px;  /* Add minimum height to ensure space for content */
 }
 
 .conversation-header {
@@ -103,11 +134,48 @@
 }
 
 .conversation-header h2 {
-    margin-right: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;  /* Adds space between the ID and Go Back button */
 }
 
-.conversation-header button {
-    margin-left: 10px;
+/* Style for Go Back button */
+.go-back-button {
+    background-color: #e9a0a5;
+    color: black;
+    border: none;
+    border-radius: 25px;
+    padding: 8px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.go-back-button:hover {
+    background-color: #e17f86;
+}
+
+/* Container for the delete button */
+.bottom-delete-container {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+}
+
+/* Style for Delete button */
+.bottom-delete-container .delete-button {
+    background-color: #ff4757;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 8px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.bottom-delete-container .delete-button:hover {
+    background-color: #ff6b77;
 }
 
 .chat-window {
@@ -135,3 +203,4 @@
     color: red;
     margin-top: 10px;
 }
+
