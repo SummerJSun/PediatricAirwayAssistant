@@ -69,7 +69,8 @@ def reset_conversation():
     except Exception as e:
         print(f"Database error: {e}")
         return jsonify({"error": "Failed to retrieve case description."}), 500
-    bmv_assistant = reset(case_description)
+    instruction_text = get_deployed_instruction()
+    bmv_assistant = reset(case_description, instruction_text)
     return '', 204  # No Content response
 
 
@@ -191,19 +192,8 @@ def set_participant_id():
 @cross_origin()  # Restrict CORS to a known domain
 def init_conversation():
     try:
-        print("Received init-conversation request with data:", request.json)
-
+        print("Received init-conversation request with data:")
         global bmv_assistant, case_description, instruction_text
-        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        INSTRUCTION_FILE = os.path.join(BASE_DIR, "CompletionsAPI", "instruction_text.txt")
-
-        # Load instruction text safely
-        try:
-            with open(INSTRUCTION_FILE, "r", encoding='utf-8', errors='replace') as file:
-                instruction = file.read()
-        except FileNotFoundError:
-            return jsonify({"error": "Instruction file not found."}), 500
-
         # Sample case description from the database
         try:
             case_description = next(db['case'].aggregate([{'$sample': {'size': 1}}]), None)
@@ -213,7 +203,8 @@ def init_conversation():
         except Exception as e:
             print(f"Database error: {e}")
             return jsonify({"error": "Failed to retrieve case description."}), 500
-
+        instruction_text = get_deployed_instruction()
+        print(f"instruction_text: {instruction_text}")
         # Initialize the assistant if not already initialized
         bmv_assistant = BMVAssistant(case_description,instruction_text)
         print("Conversation initialized")
@@ -532,6 +523,69 @@ def delete_conversation_history(participant_id):
     except Exception as e:
         app.logger.error(f"Error deleting conversation: {e}")
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/instructions', methods=['GET'])
+def get_instructions():
+    db = get_mongo()
+    collection = db['instruction']
+    instructions = list(collection.find({}))
+    for instruction in instructions:
+        instruction['_id'] = str(instruction['_id'])  # Convert ObjectId to string
+        # instruction['content'] = instruction['content'].decode('windows-1252')
+    return jsonify(instructions)
+
+@app.route('/api/instruction/<instruction_id>', methods=['POST'])
+def edit_instruction(instruction_id):
+    data = request.json
+    db = get_mongo()
+    collection = db['instruction']
+    collection.update_one(
+        {'_id': ObjectId(instruction_id)},
+        {'$set': {
+            'content': data['content'],
+            'description': data['description'],
+            'last_edit': datetime.utcnow()
+        }}
+    )
+    return jsonify({'message': 'Instruction updated successfully'})
+
+@app.route('/api/instruction/deploy/<instruction_id>', methods=['POST'])
+def deploy_instruction(instruction_id):
+    db = get_mongo()
+    collection = db['instruction']
+    collection.update_many({'deployed': True}, {'$set': {'deployed': False}})
+    collection.update_one(
+        {'_id': ObjectId(instruction_id)},
+        {'$set': {'deployed': True}}
+    )
+    return jsonify({'message': 'Instruction deployed successfully'})
+
+@app.route('/api/instruction/<instruction_id>', methods=['DELETE'])
+def delete_instruction(instruction_id):
+    db = get_mongo()
+    collection = db['instruction']
+    collection.delete_one({'_id': ObjectId(instruction_id)})
+    return jsonify({'message': 'Instruction deleted successfully'})
+
+@app.route('/api/instruction/new', methods=['POST'])
+def add_new_instruction():
+    data = request.json
+    db = get_mongo()
+    collection = db['instruction']
+    new_instruction = {
+        'content': data['content'],  # Save content as bytes
+        'description': data['description'],
+        'deployed': False,
+        'last_edit': datetime.utcnow(),
+    }
+    collection.insert_one(new_instruction)
+    return jsonify({'message': 'Instruction added successfully'})
+
+def get_deployed_instruction():
+    db = get_mongo()
+    collection = db['instruction']
+    instruction = collection.find_one({'deployed': True})
+    return instruction['content']
 
 if __name__ == '__main__':
     app.run(port=4999)

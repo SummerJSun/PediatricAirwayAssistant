@@ -25,7 +25,7 @@ class BMVAssistant:
         #         self.data = json.load(file)
         # else:
         self.data = json_file
-        print(json_file)
+        print("Case Loaded") if json_file else print("No Case Loaded")
 
         # initialization
         self.instruction_and_data = f"Instructions: \n {self.instruction} \n Case Description: \n{self.data}"
@@ -79,18 +79,7 @@ class BMVAssistant:
         return response.choices[0].message.content
 
 
-def initialize(case_description, instruction_text):
+def reset(case_description, instruction_text):
     assistant = BMVAssistant(case_description,instruction_text)
-    return assistant
-
-
-def reset(case_description):
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    INSTRUCTION_FILE = os.path.join(BASE_DIR, "CompletionsAPI", "instruction_text.txt")
-    print(INSTRUCTION_FILE)
-    with open(INSTRUCTION_FILE, "r", encoding='utf-8', errors='replace') as file:
-        instruction = file.read()
-        print('instruction updated')
-    assistant = BMVAssistant(case_description,instruction)
     return assistant
     
