@@ -435,6 +435,9 @@ Contact: david.chen2@emory.edu
 Name: Junyi (Conny) Zhou  
 Contact: junyi.zhou@emory.edu
 
+Name: Jinghan (Summer) Sun 
+Contact: jinghan.sun@emory.edu
+
 
 
 
